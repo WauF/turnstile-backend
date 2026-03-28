@@ -3,7 +3,7 @@
   "info": {
     "title": "PPE Inspection Station API",
     "description": "REST API contract for Admin Panel and Raspberry Pi integration in the PPE inspection turnstile system.",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "servers": [
     {
@@ -815,6 +815,18 @@
               "failed": { "type": "integer", "example": 74 },
               "unknown_cards": { "type": "integer", "example": 12 },
               "compliance_rate": { "type": "number", "format": "float", "example": 77.8 },
+              "daily_data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "date": { "type": "string", "format": "date", "example": "2026-03-26" },
+                    "pass": { "type": "integer", "example": 12 },
+                    "fail": { "type": "integer", "example": 3 },
+                    "rate": { "type": "number", "format": "float", "example": 80.0 }
+                  }
+                }
+              },
               "most_missed_ppe": {
                 "type": "array",
                 "items": {

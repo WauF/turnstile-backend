@@ -12,3 +12,6 @@ src/generated/
 # IDEs
 .vscode/
 .idea/
+
+*.pdf
+/module4_backend_headers/
