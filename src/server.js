@@ -2,8 +2,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const swaggerUi = require('swagger-ui-express');
 const errorHandler = require('./middlewares/errorHandler');
 const healthRoutes = require('./routes/health.routes');
+const openApiSpec = require('./docs/openapi.json');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -16,6 +18,20 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/health', healthRoutes);
+
+// API contract and interactive API docs
+app.get('/openapi.json', (req, res) => {
+  res.json(openApiSpec);
+});
+
+app.use(
+  '/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(openApiSpec, {
+    explorer: true,
+    customSiteTitle: 'Turnstile PPE API Docs',
+  })
+);
 
 // Root route
 app.get('/', (req, res) => {
