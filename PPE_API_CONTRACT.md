@@ -451,6 +451,144 @@ List all PPE item types.
 
 ---
 
+#### `GET /api/ppe-items/:id`
+
+Get a single PPE item type by ID.
+
+**Caller:** Admin Panel
+
+**Path Parameters**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | integer | PPE item ID |
+
+**200 OK**
+```json
+{
+  "success": true,
+  "data": { "id": 1, "item_key": "hard_hat", "display_name": "Hard Hat", "icon_name": "helmet" }
+}
+```
+
+**404 Not Found**
+```json
+{ "success": false, "error": { "code": 404, "message": "PPE item not found" } }
+```
+
+**Status Codes:** `200 OK` · `404`
+
+---
+
+#### `POST /api/ppe-items`
+
+Create a new PPE item type.
+
+**Caller:** Admin Panel
+
+> ⚠️ The `item_key` must match an AI model class label. Coordinate with the AI module team before adding new items.
+
+**Request Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `item_key` | string | ✅ | Must be unique, must match AI model label |
+| `display_name` | string | ✅ | Human-readable name |
+| `icon_name` | string | ❌ | Icon identifier for UI |
+
+```json
+{
+  "item_key": "safety_goggles",
+  "display_name": "Safety Goggles",
+  "icon_name": "goggles"
+}
+```
+
+**201 Created**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 6,
+    "item_key": "safety_goggles",
+    "display_name": "Safety Goggles",
+    "icon_name": "goggles"
+  }
+}
+```
+
+**Error Responses**
+
+| Status | Message |
+|---|---|
+| `409` | `"item_key already exists"` |
+| `422` | `"item_key is required"` |
+
+**Status Codes:** `201 Created` · `409` · `422`
+
+---
+
+#### `PUT /api/ppe-items/:id`
+
+Update a PPE item type. Only the fields sent will be updated.
+
+**Caller:** Admin Panel
+
+**Path Parameters**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | integer | PPE item ID |
+
+**Request Body** *(all fields optional)*
+
+| Field | Type | Notes |
+|---|---|---|
+| `item_key` | string | Unique constraint applies |
+| `display_name` | string | |
+| `icon_name` | string | |
+
+```json
+{
+  "display_name": "Hard Hat (v2)",
+  "icon_name": "helmet_v2"
+}
+```
+
+**200 OK** — Returns the updated PPE item object (same shape as `GET /api/ppe-items/:id`).
+
+**Status Codes:** `200 OK` · `404` · `409`
+
+---
+
+#### `DELETE /api/ppe-items/:id`
+
+Delete a PPE item type. Will fail if the item is currently assigned to any role.
+
+**Caller:** Admin Panel
+
+**Path Parameters**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | integer | PPE item ID |
+
+**200 OK**
+```json
+{ "success": true, "message": "PPE item deleted", "data": { "id": 1 } }
+```
+
+**Error Responses**
+
+| Status | Message |
+|---|---|
+| `404` | `"PPE item not found"` |
+| `409` | `"Cannot delete: PPE item is assigned to N role(s). Remove it from all roles first."` |
+
+**Status Codes:** `200 OK` · `404` · `409`
+
+---
+
 ### Entry Logs
 
 ---
@@ -656,6 +794,10 @@ GET /api/entry-logs/stats?start_date=2026-03-01&end_date=2026-03-20
 | `GET` | `/api/roles/:id/ppe` | Admin Panel | Get required PPE for a role |
 | `PUT` | `/api/roles/:id/ppe` | Admin Panel | Replace PPE requirements for a role |
 | `GET` | `/api/ppe-items` | Admin Panel | List all PPE item types |
+| `GET` | `/api/ppe-items/:id` | Admin Panel | Get PPE item by ID |
+| `POST` | `/api/ppe-items` | Admin Panel | Create a new PPE item type |
+| `PUT` | `/api/ppe-items/:id` | Admin Panel | Update a PPE item type |
+| `DELETE` | `/api/ppe-items/:id` | Admin Panel | Delete a PPE item type |
 | `POST` | `/api/entry-logs` | **RPi · Step 6** | Save inspection result |
 | `GET` | `/api/entry-logs` | Admin Panel | Query log history |
 | `GET` | `/api/entry-logs/stats` | Admin Panel | Compliance dashboard stats |
