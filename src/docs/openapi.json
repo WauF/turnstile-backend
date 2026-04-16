@@ -432,6 +432,173 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": ["PPE Items"],
+        "summary": "Create PPE item",
+        "description": "item_key must match AI model class label.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePpeItemRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PPE item created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PpeItemSingleResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "item_key already exists",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ppe-items/{id}": {
+      "get": {
+        "tags": ["PPE Items"],
+        "summary": "Get PPE item by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PPE item found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PpeItemSingleResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "PPE item not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["PPE Items"],
+        "summary": "Update PPE item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePpeItemRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PPE item updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PpeItemSingleResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "PPE item not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          },
+          "409": {
+            "description": "item_key already exists",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["PPE Items"],
+        "summary": "Delete PPE item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PPE item deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "PPE item deleted" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer", "example": 1 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PPE item not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          },
+          "409": {
+            "description": "PPE item is assigned to roles",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
       }
     },
     "/api/entry-logs": {
@@ -711,6 +878,30 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/PpeItem" }
           }
+        }
+      },
+      "PpeItemSingleResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": { "$ref": "#/components/schemas/PpeItem" }
+        }
+      },
+      "CreatePpeItemRequest": {
+        "type": "object",
+        "required": ["item_key", "display_name"],
+        "properties": {
+          "item_key": { "type": "string", "example": "safety_goggles" },
+          "display_name": { "type": "string", "example": "Safety Goggles" },
+          "icon_name": { "type": "string", "nullable": true, "example": "goggles" }
+        }
+      },
+      "UpdatePpeItemRequest": {
+        "type": "object",
+        "properties": {
+          "item_key": { "type": "string" },
+          "display_name": { "type": "string" },
+          "icon_name": { "type": "string", "nullable": true }
         }
       },
       "EntryResult": {

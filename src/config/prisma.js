@@ -1,4 +1,4 @@
-const { PrismaClient } = require('../generated/prisma');
+const { PrismaClient } = require('@prisma/client');
 
 // Singleton pattern: reuse the same client across hot-reloads in development
 const globalForPrisma = globalThis;

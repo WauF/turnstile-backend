@@ -15,3 +15,5 @@ src/generated/
 
 *.pdf
 /module4_backend_headers/
+
+/coverage/
