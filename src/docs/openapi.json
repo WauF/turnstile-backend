@@ -12,6 +12,7 @@
     }
   ],
   "tags": [
+    { "name": "Auth", "description": "Admin authentication (signup, login, me)" },
     { "name": "Health", "description": "Service health checks" },
     { "name": "Workers", "description": "Worker management endpoints" },
     { "name": "Roles", "description": "Role and role-PPE requirements" },
@@ -19,6 +20,111 @@
     { "name": "Entry Logs", "description": "Inspection log ingestion and querying" }
   ],
   "paths": {
+    "/api/auth/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new admin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SignUpRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Admin created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login and get JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current admin profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Current admin profile",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdminProfileResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": ["Health"],
@@ -45,6 +151,7 @@
       "get": {
         "tags": ["Workers"],
         "summary": "List workers",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "in": "query",
@@ -75,6 +182,7 @@
       "post": {
         "tags": ["Workers"],
         "summary": "Create worker",
+        "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -123,6 +231,7 @@
       "get": {
         "tags": ["Workers"],
         "summary": "Get worker by ID",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -153,6 +262,7 @@
       "put": {
         "tags": ["Workers"],
         "summary": "Partially update worker",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -199,6 +309,7 @@
       "delete": {
         "tags": ["Workers"],
         "summary": "Soft-delete worker",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -278,6 +389,7 @@
       "get": {
         "tags": ["Roles"],
         "summary": "List roles",
+        "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
             "description": "Roles list",
@@ -292,6 +404,7 @@
       "post": {
         "tags": ["Roles"],
         "summary": "Create role",
+        "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -332,6 +445,7 @@
       "get": {
         "tags": ["Roles"],
         "summary": "Get required PPE for role",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -363,6 +477,7 @@
         "tags": ["Roles"],
         "summary": "Replace PPE requirements for role",
         "description": "Replace operation: submitted list fully replaces existing role PPE requirements.",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -422,6 +537,7 @@
         "tags": ["PPE Items"],
         "summary": "List all PPE items",
         "description": "item_key values should match AI model class labels exactly.",
+        "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
             "description": "PPE item list",
@@ -432,51 +548,13 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": ["PPE Items"],
-        "summary": "Create PPE item",
-        "description": "item_key must match AI model class label.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreatePpeItemRequest" }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "PPE item created",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/PpeItemSingleResponse" }
-              }
-            }
-          },
-          "409": {
-            "description": "item_key already exists",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
-              }
-            }
-          }
-        }
       }
     },
     "/api/ppe-items/{id}": {
       "get": {
         "tags": ["PPE Items"],
         "summary": "Get PPE item by ID",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -496,102 +574,6 @@
           },
           "404": {
             "description": "PPE item not found",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": ["PPE Items"],
-        "summary": "Update PPE item",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/UpdatePpeItemRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "PPE item updated",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/PpeItemSingleResponse" }
-              }
-            }
-          },
-          "404": {
-            "description": "PPE item not found",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
-              }
-            }
-          },
-          "409": {
-            "description": "item_key already exists",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["PPE Items"],
-        "summary": "Delete PPE item",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "PPE item deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "PPE item deleted" },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "id": { "type": "integer", "example": 1 }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "PPE item not found",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
-              }
-            }
-          },
-          "409": {
-            "description": "PPE item is assigned to roles",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
@@ -636,6 +618,7 @@
       "get": {
         "tags": ["Entry Logs"],
         "summary": "List entry logs",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           { "in": "query", "name": "worker_id", "schema": { "type": "integer" }, "required": false },
           {
@@ -675,6 +658,7 @@
       "get": {
         "tags": ["Entry Logs"],
         "summary": "Get compliance dashboard stats",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "in": "query",
@@ -703,7 +687,62 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your JWT token obtained from /api/auth/login or /api/auth/signup"
+      }
+    },
     "schemas": {
+      "SignUpRequest": {
+        "type": "object",
+        "required": ["email", "password", "name"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "admin@example.com" },
+          "password": { "type": "string", "minLength": 6, "example": "securePassword123" },
+          "name": { "type": "string", "example": "John Doe" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "admin@example.com" },
+          "password": { "type": "string", "example": "securePassword123" }
+        }
+      },
+      "Admin": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "email": { "type": "string", "example": "admin@example.com" },
+          "name": { "type": "string", "example": "John Doe" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "admin": { "$ref": "#/components/schemas/Admin" },
+              "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIs..." }
+            }
+          }
+        }
+      },
+      "AdminProfileResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": { "$ref": "#/components/schemas/Admin" }
+        }
+      },
       "ErrorEnvelope": {
         "type": "object",
         "required": ["success", "error"],
@@ -887,23 +926,7 @@
           "data": { "$ref": "#/components/schemas/PpeItem" }
         }
       },
-      "CreatePpeItemRequest": {
-        "type": "object",
-        "required": ["item_key", "display_name"],
-        "properties": {
-          "item_key": { "type": "string", "example": "safety_goggles" },
-          "display_name": { "type": "string", "example": "Safety Goggles" },
-          "icon_name": { "type": "string", "nullable": true, "example": "goggles" }
-        }
-      },
-      "UpdatePpeItemRequest": {
-        "type": "object",
-        "properties": {
-          "item_key": { "type": "string" },
-          "display_name": { "type": "string" },
-          "icon_name": { "type": "string", "nullable": true }
-        }
-      },
+
       "EntryResult": {
         "type": "string",
         "enum": ["PASS", "FAIL", "UNKNOWN_CARD"]
