@@ -76,6 +76,7 @@ describe('Error propagation', () => {
     expect(res.status).toBe(500);
     expect(res.body.success).toBe(false);
   });
+});
 
 
 

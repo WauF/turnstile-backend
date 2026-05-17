@@ -2,6 +2,7 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/tests/**/*.test.js'],
   verbose: true,
+  setupFilesAfterEnv: ['<rootDir>/tests/setupAuthMock.js'],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/generated/**',
