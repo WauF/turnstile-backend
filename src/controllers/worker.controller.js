@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { uploadPhoto, deletePhoto, keyFromUrl } = require('../services/storage.service');
 
 // ─── GET /api/workers ────────────────────────────────────
 const getAllWorkers = async (req, res, next) => {
@@ -152,6 +153,7 @@ const updateWorker = async (req, res, next) => {
 };
 
 // ─── DELETE /api/workers/:id ─────────────────────────────
+// Soft-delete: marks worker as inactive and releases their RFID card
 const deleteWorker = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -166,13 +168,51 @@ const deleteWorker = async (req, res, next) => {
 
     await prisma.worker.update({
       where: { id },
-      data: { isActive: false },
+      // Also null-out RFID so the card can be re-assigned to another worker
+      data: { isActive: false, rfidCardUid: null },
     });
 
     res.json({
       success: true,
       message: 'Worker deactivated',
       data: { id, is_active: false },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── DELETE /api/workers/:id/permanent ───────────────────
+// Hard-delete: removes worker from DB and deletes their R2 profile photo
+const hardDeleteWorker = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const existing = await prisma.worker.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker not found' },
+      });
+    }
+
+    // Delete profile photo from R2 before removing the DB record
+    if (existing.photoUrl) {
+      const key = keyFromUrl(existing.photoUrl);
+      if (key) {
+        await deletePhoto(key).catch(() => {
+          // Non-fatal: log but don't block the deletion
+          console.warn(`[R2] Failed to delete photo for worker ${id}: ${key}`);
+        });
+      }
+    }
+
+    await prisma.worker.delete({ where: { id } });
+
+    res.json({
+      success: true,
+      message: 'Worker permanently deleted',
+      data: { id },
     });
   } catch (err) {
     next(err);
@@ -224,6 +264,94 @@ const getWorkerByCard = async (req, res, next) => {
   }
 };
 
+// ─── POST /api/workers/:id/photo ───────────────────────
+const uploadWorkerPhoto = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const worker = await prisma.worker.findUnique({ where: { id } });
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker not found' },
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: 'No image file provided' },
+      });
+    }
+
+    // Delete old photo from R2 if one exists
+    if (worker.photoUrl) {
+      const oldKey = keyFromUrl(worker.photoUrl);
+      if (oldKey) {
+        await deletePhoto(oldKey).catch(() => {
+          // Non-fatal: log but don't block the upload
+          console.warn(`[R2] Failed to delete old photo key: ${oldKey}`);
+        });
+      }
+    }
+
+    const { url } = await uploadPhoto(id, req.file.buffer, req.file.mimetype);
+
+    const updated = await prisma.worker.update({
+      where: { id },
+      data: { photoUrl: url },
+      include: { role: true },
+    });
+
+    res.json({
+      success: true,
+      data: formatWorker(updated),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── DELETE /api/workers/:id/photo ──────────────────────
+const deleteWorkerPhoto = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const worker = await prisma.worker.findUnique({ where: { id } });
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker not found' },
+      });
+    }
+
+    if (!worker.photoUrl) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker has no profile photo' },
+      });
+    }
+
+    const key = keyFromUrl(worker.photoUrl);
+    if (key) {
+      await deletePhoto(key);
+    }
+
+    const updated = await prisma.worker.update({
+      where: { id },
+      data: { photoUrl: null },
+      include: { role: true },
+    });
+
+    res.json({
+      success: true,
+      data: formatWorker(updated),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── Helper ──────────────────────────────────────────────
 
 /**
@@ -250,5 +378,8 @@ module.exports = {
   getWorkerById,
   updateWorker,
   deleteWorker,
+  hardDeleteWorker,
   getWorkerByCard,
+  uploadWorkerPhoto,
+  deleteWorkerPhoto,
 };
