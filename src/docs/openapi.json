@@ -262,6 +262,7 @@
       "put": {
         "tags": ["Workers"],
         "summary": "Partially update worker",
+        "description": "Updates worker details. If an inactive worker is assigned a new `rfid_card_uid`, they will be automatically reactivated (`is_active` set to `true`).",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
