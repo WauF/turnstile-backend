@@ -135,7 +135,13 @@ const updateWorker = async (req, res, next) => {
     if (full_name !== undefined) data.fullName = full_name;
     if (role_id !== undefined) data.roleId = parseInt(role_id, 10);
     if (photo_url !== undefined) data.photoUrl = photo_url;
-    if (rfid_card_uid !== undefined) data.rfidCardUid = rfid_card_uid;
+    if (rfid_card_uid !== undefined) {
+      data.rfidCardUid = rfid_card_uid;
+      // Reactivate the worker if they are currently inactive and receiving a new card
+      if (!existing.isActive && rfid_card_uid) {
+        data.isActive = true;
+      }
+    }
 
     const worker = await prisma.worker.update({
       where: { id },
