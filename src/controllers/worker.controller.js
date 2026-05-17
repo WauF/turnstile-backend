@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { uploadPhoto, deletePhoto, keyFromUrl } = require('../services/storage.service');
 
 // ─── GET /api/workers ────────────────────────────────────
 const getAllWorkers = async (req, res, next) => {
@@ -224,6 +225,94 @@ const getWorkerByCard = async (req, res, next) => {
   }
 };
 
+// ─── POST /api/workers/:id/photo ───────────────────────
+const uploadWorkerPhoto = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const worker = await prisma.worker.findUnique({ where: { id } });
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker not found' },
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: 'No image file provided' },
+      });
+    }
+
+    // Delete old photo from R2 if one exists
+    if (worker.photoUrl) {
+      const oldKey = keyFromUrl(worker.photoUrl);
+      if (oldKey) {
+        await deletePhoto(oldKey).catch(() => {
+          // Non-fatal: log but don't block the upload
+          console.warn(`[R2] Failed to delete old photo key: ${oldKey}`);
+        });
+      }
+    }
+
+    const { url } = await uploadPhoto(id, req.file.buffer, req.file.mimetype);
+
+    const updated = await prisma.worker.update({
+      where: { id },
+      data: { photoUrl: url },
+      include: { role: true },
+    });
+
+    res.json({
+      success: true,
+      data: formatWorker(updated),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── DELETE /api/workers/:id/photo ──────────────────────
+const deleteWorkerPhoto = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const worker = await prisma.worker.findUnique({ where: { id } });
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker not found' },
+      });
+    }
+
+    if (!worker.photoUrl) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker has no profile photo' },
+      });
+    }
+
+    const key = keyFromUrl(worker.photoUrl);
+    if (key) {
+      await deletePhoto(key);
+    }
+
+    const updated = await prisma.worker.update({
+      where: { id },
+      data: { photoUrl: null },
+      include: { role: true },
+    });
+
+    res.json({
+      success: true,
+      data: formatWorker(updated),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── Helper ──────────────────────────────────────────────
 
 /**
@@ -251,4 +340,6 @@ module.exports = {
   updateWorker,
   deleteWorker,
   getWorkerByCard,
+  uploadWorkerPhoto,
+  deleteWorkerPhoto,
 };
