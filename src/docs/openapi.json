@@ -3,7 +3,7 @@
   "info": {
     "title": "PPE Inspection Station API",
     "description": "REST API contract for Admin Panel and Raspberry Pi integration in the PPE inspection turnstile system.",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "servers": [
     {
@@ -308,7 +308,8 @@
       },
       "delete": {
         "tags": ["Workers"],
-        "summary": "Soft-delete worker",
+        "summary": "Soft-delete worker (deactivate)",
+        "description": "Sets `is_active` to `false` and clears `rfid_card_uid` to `null` so the RFID card can be re-assigned. The worker record is **not** removed from the database.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
@@ -320,7 +321,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Worker deactivated",
+            "description": "Worker deactivated and RFID card released",
             "content": {
               "application/json": {
                 "schema": {
@@ -337,6 +338,69 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          },
+          "404": {
+            "description": "Worker not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workers/{id}/permanent": {
+      "delete": {
+        "tags": ["Workers"],
+        "summary": "Hard-delete worker (permanent)",
+        "description": "Permanently removes the worker record from the database. If the worker has a profile photo stored in Cloudflare R2, the object is deleted first. **This action is irreversible.**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "Worker ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Worker permanently deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Worker permanently deleted" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer", "example": 1 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
               }
             }
           },

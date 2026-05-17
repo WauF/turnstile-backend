@@ -13,5 +13,8 @@ module.exports = {
     // Redirect prisma imports to our manual mock
     '^../config/prisma$': '<rootDir>/src/__mocks__/config/prisma',
     '^../../config/prisma$': '<rootDir>/src/__mocks__/config/prisma',
+    // Redirect storage service to our manual mock (prevents real R2/S3 client init)
+    '^../services/storage\\.service$': '<rootDir>/src/__mocks__/services/storage.service',
+    '^../../services/storage\\.service$': '<rootDir>/src/__mocks__/services/storage.service',
   },
 };

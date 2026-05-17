@@ -153,6 +153,7 @@ const updateWorker = async (req, res, next) => {
 };
 
 // ─── DELETE /api/workers/:id ─────────────────────────────
+// Soft-delete: marks worker as inactive and releases their RFID card
 const deleteWorker = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -167,13 +168,51 @@ const deleteWorker = async (req, res, next) => {
 
     await prisma.worker.update({
       where: { id },
-      data: { isActive: false },
+      // Also null-out RFID so the card can be re-assigned to another worker
+      data: { isActive: false, rfidCardUid: null },
     });
 
     res.json({
       success: true,
       message: 'Worker deactivated',
       data: { id, is_active: false },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── DELETE /api/workers/:id/permanent ───────────────────
+// Hard-delete: removes worker from DB and deletes their R2 profile photo
+const hardDeleteWorker = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const existing = await prisma.worker.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker not found' },
+      });
+    }
+
+    // Delete profile photo from R2 before removing the DB record
+    if (existing.photoUrl) {
+      const key = keyFromUrl(existing.photoUrl);
+      if (key) {
+        await deletePhoto(key).catch(() => {
+          // Non-fatal: log but don't block the deletion
+          console.warn(`[R2] Failed to delete photo for worker ${id}: ${key}`);
+        });
+      }
+    }
+
+    await prisma.worker.delete({ where: { id } });
+
+    res.json({
+      success: true,
+      message: 'Worker permanently deleted',
+      data: { id },
     });
   } catch (err) {
     next(err);
@@ -339,6 +378,7 @@ module.exports = {
   getWorkerById,
   updateWorker,
   deleteWorker,
+  hardDeleteWorker,
   getWorkerByCard,
   uploadWorkerPhoto,
   deleteWorkerPhoto,
