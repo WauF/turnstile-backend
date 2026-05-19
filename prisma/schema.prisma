@@ -35,7 +35,7 @@ model Role {
 model Worker {
   id          Int      @id @default(autoincrement())
   fullName    String   @db.VarChar(100) @map("full_name")
-  rfidCardUid String   @unique @db.VarChar(20) @map("rfid_card_uid")
+  rfidCardUid String?  @unique @db.VarChar(20) @map("rfid_card_uid")
   roleId      Int      @map("role_id")
   isActive    Boolean  @default(true) @map("is_active")
   photoUrl    String?  @db.VarChar(255) @map("photo_url")
