@@ -86,6 +86,17 @@ model EntryLog {
   @@map("entry_logs")
 }
 
+model RfidScan {
+  id        Int      @id @default(autoincrement())
+  slot      Int      @unique @default(1)
+  rfid      String   @db.VarChar(50)
+  scannedAt DateTime @map("scanned_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("rfid_scans")
+}
+
 model DetectionDetail {
   id          Int     @id @default(autoincrement())
   entryLogId  Int     @map("entry_log_id")

@@ -58,6 +58,78 @@ All endpoints use the same error envelope:
 
 ## Endpoints
 
+### RFID Scan
+
+---
+
+#### `POST /api/rfid/scan`
+
+Store the latest RFID scan (overwrites the previous record).
+
+**Caller:** RPi
+
+**Request Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `rfid` | string | ✅ | RFID card UID |
+| `timestamp` | string | ✅ | ISO 8601 date-time |
+
+```json
+{
+  "rfid": "A3F2C1D4",
+  "timestamp": "2026-06-03T12:05:30.000Z"
+}
+```
+
+**201 Created**
+```json
+{
+  "success": true,
+  "data": {
+    "rfid": "A3F2C1D4",
+    "timestamp": "2026-06-03T12:05:30.000Z"
+  }
+}
+```
+
+**Error Responses**
+
+| Status | Message |
+|---|---|
+| `422` | "rfid is required" |
+| `422` | "timestamp is required" |
+| `422` | "timestamp must be a valid date-time" |
+
+**Status Codes:** `201 Created` · `422`
+
+---
+
+#### `GET /api/rfid/scan`
+
+Fetch the latest RFID scan.
+
+**Caller:** RPi
+
+**200 OK**
+```json
+{
+  "success": true,
+  "data": {
+    "rfid": "A3F2C1D4",
+    "timestamp": "2026-06-03T12:05:30.000Z"
+  }
+}
+```
+
+**Error Responses**
+
+| Status | Message |
+|---|---|
+| `404` | "No RFID scan found" |
+
+**Status Codes:** `200 OK` · `404`
+
 ### Workers
 
 ---
