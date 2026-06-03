@@ -103,6 +103,62 @@ const getWorkerById = async (req, res, next) => {
   }
 };
 
+// ─── GET /api/workers/digital-twin/:id ──────────────────
+const getWorkerDigitalTwin = async (req, res, next) => {
+  try {
+    const workerId = parseInt(req.params.id, 10);
+
+    const worker = await prisma.worker.findUnique({
+      where: { id: workerId },
+      include: { role: true },
+    });
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 404, message: 'Worker not found' },
+      });
+    }
+
+    const [passed, failed, totalScans, lastLogs] = await Promise.all([
+      prisma.entryLog.count({ where: { workerId, result: 'PASS' } }),
+      prisma.entryLog.count({ where: { workerId, result: 'FAIL' } }),
+      prisma.entryLog.count({ where: { workerId } }),
+      prisma.entryLog.findMany({
+        where: { workerId },
+        include: {
+          detectionDetails: {
+            include: { ppeItem: true },
+          },
+        },
+        orderBy: { scannedAt: 'desc' },
+        take: 10,
+      }),
+    ]);
+
+    const complianceRate =
+      passed + failed > 0
+        ? parseFloat(((passed / (passed + failed)) * 100).toFixed(1))
+        : 0;
+
+    res.json({
+      success: true,
+      data: {
+        worker: formatWorker(worker),
+        stats: {
+          total_scans: totalScans,
+          passed,
+          failed,
+          compliance_rate: complianceRate,
+        },
+        last_10_entry_logs: lastLogs.map(formatDigitalTwinEntryLog),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── PUT /api/workers/:id ────────────────────────────────
 const updateWorker = async (req, res, next) => {
   try {
@@ -378,6 +434,23 @@ function formatWorker(worker) {
   };
 }
 
+function formatDigitalTwinEntryLog(log) {
+  return {
+    id: log.id,
+    rfid_uid_scanned: log.rfidUidScanned,
+    result: log.result,
+    scanned_at: log.scannedAt,
+    inspection_time_ms: log.inspectionTimeMs,
+    camera_snapshot_url: log.cameraSnapshotUrl,
+    missing_ppe: log.detectionDetails
+      .filter((d) => d.wasRequired && !d.wasDetected)
+      .map((d) => ({
+        item_key: d.ppeItem.itemKey,
+        display_name: d.ppeItem.displayName,
+      })),
+  };
+}
+
 module.exports = {
   getAllWorkers,
   createWorker,
@@ -386,6 +459,7 @@ module.exports = {
   deleteWorker,
   hardDeleteWorker,
   getWorkerByCard,
+  getWorkerDigitalTwin,
   uploadWorkerPhoto,
   deleteWorkerPhoto,
 };

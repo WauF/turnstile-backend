@@ -268,6 +268,67 @@ Get a single worker by ID.
 
 ---
 
+#### `GET /api/workers/digital-twin/:id`
+
+Return aggregated worker compliance stats and the latest 10 entry logs for the worker.
+
+**Caller:** Admin Panel
+
+**Authentication:** Bearer token required
+
+**Path Parameters**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | integer | Worker ID |
+
+**200 OK**
+```json
+{
+  "success": true,
+  "data": {
+    "worker": {
+      "id": 1,
+      "full_name": "Ali Yılmaz",
+      "rfid_card_uid": "A3F2C1D4",
+      "role_id": 2,
+      "role_name": "Technician",
+      "is_active": true,
+      "photo_url": "/uploads/workers/1.jpg",
+      "created_at": "2026-03-01T10:00:00Z",
+      "updated_at": "2026-03-15T14:22:00Z"
+    },
+    "stats": {
+      "total_scans": 12,
+      "passed": 8,
+      "failed": 4,
+      "compliance_rate": 66.7
+    },
+    "last_10_entry_logs": [
+      {
+        "id": 115,
+        "rfid_uid_scanned": "A3F2C1D4",
+        "result": "FAIL",
+        "scanned_at": "2026-05-02T08:12:00Z",
+        "inspection_time_ms": 410,
+        "camera_snapshot_url": null,
+        "missing_ppe": [
+          { "item_key": "hard_hat", "display_name": "Hard Hat" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Notes**
+
+- `compliance_rate` is calculated as `passed / (passed + failed) * 100`.
+
+**Status Codes:** `200 OK` · `404` · `401`
+
+---
+
 #### `PUT /api/workers/:id`
 
 Partially update a worker's information. Only the fields sent will be updated.
