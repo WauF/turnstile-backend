@@ -17,7 +17,8 @@
     { "name": "Workers", "description": "Worker management endpoints" },
     { "name": "Roles", "description": "Role and role-PPE requirements" },
     { "name": "PPE Items", "description": "Master PPE item catalog" },
-    { "name": "Entry Logs", "description": "Inspection log ingestion and querying" }
+    { "name": "Entry Logs", "description": "Inspection log ingestion and querying" },
+    { "name": "RFID", "description": "Public RFID scan endpoints" }
   ],
   "paths": {
     "/api/auth/signup": {
@@ -568,6 +569,60 @@
         }
       }
     },
+    "/api/rfid/scan": {
+      "post": {
+        "tags": ["RFID"],
+        "summary": "Store latest RFID scan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RfidScanRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "RFID scan stored",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RfidScanResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["RFID"],
+        "summary": "Get latest RFID scan",
+        "responses": {
+          "200": {
+            "description": "Latest RFID scan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RfidScanResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "No RFID scan found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/roles": {
       "get": {
         "tags": ["Roles"],
@@ -1021,6 +1076,27 @@
                 "type": "array",
                 "items": { "$ref": "#/components/schemas/RequiredPpeItem" }
               }
+            }
+          }
+        }
+      },
+      "RfidScanRequest": {
+        "type": "object",
+        "required": ["rfid", "timestamp"],
+        "properties": {
+          "rfid": { "type": "string", "example": "A3F2C1D4" },
+          "timestamp": { "type": "string", "format": "date-time", "example": "2026-06-03T12:05:30.000Z" }
+        }
+      },
+      "RfidScanResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "rfid": { "type": "string", "example": "A3F2C1D4" },
+              "timestamp": { "type": "string", "format": "date-time" }
             }
           }
         }

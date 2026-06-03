@@ -10,6 +10,7 @@ const workerRoutes = require('./routes/worker.routes');
 const roleRoutes = require('./routes/role.routes');
 const ppeItemRoutes = require('./routes/ppeItem.routes');
 const entryLogRoutes = require('./routes/entryLog.routes');
+const rfidScanRoutes = require('./routes/rfidScan.routes');
 const { getWorkerByCard } = require('./controllers/worker.controller');
 const { createEntryLog } = require('./controllers/entryLog.controller');
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 // Device-facing endpoints (used by RPi / turnstile hardware)
 app.get('/api/workers/card/:uid', getWorkerByCard);
 app.post('/api/entry-logs', createEntryLog);
+app.use('/api/rfid/scan', rfidScanRoutes);
 
 // ─── Protected routes (admin JWT required) ──────────────
 app.use('/api/workers', authenticate, workerRoutes);
