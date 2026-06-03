@@ -10,12 +10,14 @@ const {
   deleteWorker,
   hardDeleteWorker,
   getWorkerByCard,
+  getWorkerDigitalTwin,
   uploadWorkerPhoto,
   deleteWorkerPhoto,
 } = require('../controllers/worker.controller');
 
 // Card lookup must be defined BEFORE /:id to avoid "card" being parsed as an ID
 router.get('/card/:uid', getWorkerByCard);
+router.get('/digital-twin/:id', getWorkerDigitalTwin);
 
 router.get('/', getAllWorkers);
 router.post('/', requireFields(['full_name', 'rfid_card_uid', 'role_id']), createWorker);

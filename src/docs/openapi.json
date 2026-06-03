@@ -228,6 +228,48 @@
         }
       }
     },
+    "/api/workers/digital-twin/{id}": {
+      "get": {
+        "tags": ["Workers"],
+        "summary": "Get worker digital twin",
+        "description": "Returns aggregated compliance stats and the latest 10 entry logs for the worker.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Digital twin data",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkerDigitalTwinResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          },
+          "404": {
+            "description": "Worker not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/workers/{id}": {
       "get": {
         "tags": ["Workers"],
@@ -1026,6 +1068,53 @@
         "properties": {
           "success": { "type": "boolean", "example": true },
           "data": { "$ref": "#/components/schemas/Worker" }
+        }
+      },
+      "WorkerDigitalTwinEntryLog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 115 },
+          "rfid_uid_scanned": { "type": "string", "example": "A3F2C1D4" },
+          "result": { "$ref": "#/components/schemas/EntryResult" },
+          "scanned_at": { "type": "string", "format": "date-time" },
+          "inspection_time_ms": { "type": "integer", "nullable": true, "example": 410 },
+          "camera_snapshot_url": { "type": "string", "nullable": true, "example": null },
+          "missing_ppe": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item_key": { "type": "string", "example": "hard_hat" },
+                "display_name": { "type": "string", "example": "Hard Hat" }
+              }
+            }
+          }
+        }
+      },
+      "WorkerDigitalTwinStats": {
+        "type": "object",
+        "properties": {
+          "total_scans": { "type": "integer", "example": 12 },
+          "passed": { "type": "integer", "example": 8 },
+          "failed": { "type": "integer", "example": 4 },
+          "compliance_rate": { "type": "number", "format": "float", "example": 66.7 }
+        }
+      },
+      "WorkerDigitalTwinResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "worker": { "$ref": "#/components/schemas/Worker" },
+              "stats": { "$ref": "#/components/schemas/WorkerDigitalTwinStats" },
+              "last_10_entry_logs": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/WorkerDigitalTwinEntryLog" }
+              }
+            }
+          }
         }
       },
       "CreateWorkerRequest": {
